@@ -1,3 +1,4 @@
+import { ApexOptions } from "apexcharts";
 import dynamic from "next/dynamic";
 import { Box, Flex, SimpleGrid, Text, theme } from "@chakra-ui/react";
 import { Header } from "../components/Header";
@@ -6,7 +7,7 @@ const Chart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
 });
 
-const options = {
+const options: ApexOptions = {
   chart: {
     toolbar: {
       show: false,
@@ -46,7 +47,7 @@ const options = {
   fill: {
     opacity: 0.3,
     type: "gradient",
-    gradiant: {
+    gradient: {
       shade: "dark",
       opacityFrom: 0.7,
       opacityTo: 0.3,
