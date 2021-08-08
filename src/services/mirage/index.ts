@@ -4,7 +4,6 @@ import faker from "faker";
 type User = {
   name: string;
   email: string;
-  password: string;
   created_at: string;
 };
 
@@ -28,7 +27,7 @@ export function makeServer() {
       }),
     },
     seeds(server) {
-      server.createList("user", 200);
+      server.createList("user", 10);
     },
 
     routes() {
