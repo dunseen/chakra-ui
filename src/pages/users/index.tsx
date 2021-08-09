@@ -23,19 +23,21 @@ import { Header } from "../../components/Header";
 import Pagination from "../../components/Pagination";
 import Sidebar from "../../components/Sidebar";
 import api from "../../services/api";
-import { useUsers } from "../../services/hooks/useUser";
+import { getUsers, useUsers } from "../../services/hooks/useUser";
 import { queryClient } from "../../services/queryClient";
 
-export default function UsersList() {
+export default function UsersList({ users }) {
   const [page, setPage] = useState(1);
-  const { data, isLoading, isFetching, error } = useUsers(page);
+  const { data, isLoading, isFetching, error } = useUsers(page, {
+    initialData: users,
+  });
 
   const isWideVersion = useBreakpointValue({
     base: false,
     lg: true,
   });
 
-  async function handlePrefetchUser(userId: number) {
+  async function handlePrefetchUser(userId: string) {
     await queryClient.prefetchQuery(
       ["user", userId],
       async () => {
@@ -145,3 +147,14 @@ export default function UsersList() {
     </Box>
   );
 }
+
+export const getServerSideProps = async () => {
+  const { users, totalCount } = await getUsers(1);
+
+  return {
+    props: {
+      users,
+      totalCount,
+    },
+  };
+};
