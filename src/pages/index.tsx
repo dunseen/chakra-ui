@@ -3,12 +3,8 @@ import { Input } from "../components/Form/Input";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 
-import { SubmitHandler, useForm } from "react-hook-form";
-
-type SignInFormData = {
-  email: string;
-  password: string;
-};
+import { useForm } from "react-hook-form";
+import { useAuth } from "../contexts/AuthContext";
 
 const signInFormSchema = yup.object().shape({
   email: yup.string().required("E-mail obrigatório").email("E-mail inválido"),
@@ -20,12 +16,9 @@ export default function Home() {
     resolver: yupResolver(signInFormSchema),
   });
 
+  const { signIn } = useAuth();
+
   const { errors } = formState;
-  console.log(errors);
-  const handleSignIn: SubmitHandler<SignInFormData> = async (formData) => {
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    console.log(formData);
-  };
 
   return (
     <Flex w="100vw" h="100vh" align="center" justify="center">
@@ -37,7 +30,7 @@ export default function Home() {
         p="8"
         borderRadius={8}
         flexDir="column"
-        onSubmit={handleSubmit(handleSignIn)}
+        onSubmit={handleSubmit(signIn)}
       >
         <Stack spacing="4">
           <Input
