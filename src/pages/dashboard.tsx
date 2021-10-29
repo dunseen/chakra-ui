@@ -1,8 +1,10 @@
+import { useEffect } from "react";
 import { ApexOptions } from "apexcharts";
 import dynamic from "next/dynamic";
 import { Box, Flex, SimpleGrid, Text, theme } from "@chakra-ui/react";
 import { Header } from "../components/Header";
 import Sidebar from "../components/Sidebar";
+import apiAuth from "../services/apiAuth";
 const Chart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
 });
@@ -57,6 +59,15 @@ const options: ApexOptions = {
 const series = [{ name: "Notificações", data: [31, 120, 10, 28, 61, 18, 109] }];
 
 export default function Dashboard() {
+  useEffect(() => {
+    apiAuth
+      .get("/me")
+      .then((response) => {
+        console.log(response);
+      })
+      .catch((error) => console.error(error));
+  }, []);
+
   return (
     <Flex direction="column" h="100vh">
       <Header />
