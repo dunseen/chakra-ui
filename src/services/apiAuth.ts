@@ -1,5 +1,6 @@
 import axios, { AxiosError } from "axios";
 import { parseCookies, setCookie } from "nookies";
+import { signOut } from "../contexts/AuthContext";
 
 let cookies = parseCookies();
 let isRefreshing = false;
@@ -17,7 +18,6 @@ apiAuth.interceptors.response.use(
   (error: AxiosError) => {
     if (error.response.status === 401) {
       if (error.response.data?.code === "token.expired") {
-        //refresh token
         cookies = parseCookies();
 
         const { "dashgo.refreshToken": refreshToken } = cookies;
@@ -55,7 +55,7 @@ apiAuth.interceptors.response.use(
             })
             .catch((error) => {
               failedRequestsQueue.forEach((request) =>
-                request.onSuccess(error)
+                request.onFailure(error)
               );
               failedRequestsQueue = [];
             })
@@ -77,9 +77,11 @@ apiAuth.interceptors.response.use(
           });
         });
       } else {
-        //logout user
+        signOut();
       }
     }
+
+    return Promise.reject(error);
   }
 );
 
