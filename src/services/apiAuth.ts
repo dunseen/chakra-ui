@@ -2,6 +2,8 @@ import axios, { AxiosError } from "axios";
 import { parseCookies, setCookie } from "nookies";
 
 let cookies = parseCookies();
+let isRefreshing = false;
+let failedRequestsQueue = [];
 
 const apiAuth = axios.create({
   baseURL: "http://localhost:3333",
@@ -19,26 +21,60 @@ apiAuth.interceptors.response.use(
         cookies = parseCookies();
 
         const { "dashgo.refreshToken": refreshToken } = cookies;
+        const originalConfig = error.config;
 
-        apiAuth.post("/refresh", { refreshToken }).then((response) => {
-          const { token } = response.data;
+        if (!isRefreshing) {
+          isRefreshing = true;
 
-          setCookie(undefined, "dashgo.token", token, {
-            maxAge: 60 * 60 * 24 * 30, //30d
-            path: "/",
+          apiAuth
+            .post("/refresh", { refreshToken })
+            .then((response) => {
+              const { token } = response.data;
+
+              setCookie(undefined, "dashgo.token", token, {
+                maxAge: 60 * 60 * 24 * 30, //30d
+                path: "/",
+              });
+
+              setCookie(
+                undefined,
+                "dashgo.refreshToken",
+                response.data.refreshToken,
+                {
+                  maxAge: 60 * 60 * 24 * 30, //30d
+                  path: "/",
+                }
+              );
+
+              apiAuth.defaults.headers["Authorization"] = `Bearer ${token}`;
+
+              failedRequestsQueue.forEach((request) =>
+                request.onSuccess(token)
+              );
+              failedRequestsQueue = [];
+            })
+            .catch((error) => {
+              failedRequestsQueue.forEach((request) =>
+                request.onSuccess(error)
+              );
+              failedRequestsQueue = [];
+            })
+            .finally(() => {
+              isRefreshing = false;
+            });
+        }
+
+        return new Promise((resolve, reject) => {
+          failedRequestsQueue.push({
+            onSuccess: (token: string) => {
+              originalConfig.headers["Authorization"] = `Bearer ${token}`;
+
+              resolve(apiAuth(originalConfig));
+            },
+            onFailure: (error: AxiosError) => {
+              reject(error);
+            },
           });
-
-          setCookie(
-            undefined,
-            "dashgo.refreshToken",
-            response.data.refreshToken,
-            {
-              maxAge: 60 * 60 * 24 * 30, //30d
-              path: "/",
-            }
-          );
-
-          apiAuth.defaults.headers["Authorization"] = `Bearer ${token}`;
         });
       } else {
         //logout user
