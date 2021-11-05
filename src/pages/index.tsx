@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { useAuth } from "../contexts/AuthContext";
 import { GetServerSideProps } from "next";
 import { parseCookies } from "nookies";
+import { withSSRGuest } from "../utils/withSSRGuest";
 
 const signInFormSchema = yup.object().shape({
   email: yup.string().required("E-mail obrigatório").email("E-mail inválido"),
@@ -65,19 +66,8 @@ export default function Home() {
   );
 }
 
-export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  const cookies = parseCookies(ctx);
-
-  if (cookies["dashgo.token"]) {
-    return {
-      redirect: {
-        destination: "/dashboard",
-        permanent: false,
-      },
-    };
-  }
-
+export const getServerSideProps = withSSRGuest(async (ctx) => {
   return {
     props: {},
   };
-};
+});
