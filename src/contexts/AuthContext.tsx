@@ -16,7 +16,9 @@ interface SignInCredential {
 }
 
 interface AuthContextData {
-  signIn(credentials: SignInCredential): Promise<void>;
+  signIn: (credentials: SignInCredential) => Promise<void>;
+  signOut: () => void;
+
   user: User;
   isAuthenticated: boolean;
 }
@@ -27,16 +29,38 @@ interface AuthProviderProps {
 
 const AuthContext = createContext({} as AuthContextData);
 
+let authChannel: BroadcastChannel;
+
 export function signOut() {
   destroyCookie(undefined, "dashgo.token");
   destroyCookie(undefined, "dashgo.refreshToken");
 
   Router.push("/");
+  authChannel.postMessage("signOut");
 }
 
 function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User>();
   const isAuthenticated = !!user;
+
+  useEffect(() => {
+    authChannel = new BroadcastChannel("auth");
+
+    authChannel.onmessage = (message) => {
+      switch (message.data) {
+        case "signOut":
+          signOut();
+          authChannel.close();
+          break;
+        case "signIn":
+          window.location.href = "/dashboard";
+          break;
+
+        default:
+          break;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const { "dashgo.token": token } = parseCookies();
@@ -82,13 +106,15 @@ function AuthProvider({ children }: AuthProviderProps) {
       apiAuth.defaults.headers["Authorization"] = `Bearer ${token}`;
 
       Router.push("/dashboard");
+
+      authChannel.postMessage("signIn");
     } catch (error) {
       console.log(error);
     }
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, signIn, user }}>
+    <AuthContext.Provider value={{ isAuthenticated, signIn, user, signOut }}>
       {children}
     </AuthContext.Provider>
   );
