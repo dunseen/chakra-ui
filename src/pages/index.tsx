@@ -5,8 +5,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 
 import { useForm } from "react-hook-form";
 import { useAuth } from "../contexts/AuthContext";
-import { GetServerSideProps } from "next";
-import { parseCookies } from "nookies";
+
 import { withSSRGuest } from "../utils/withSSRGuest";
 
 const signInFormSchema = yup.object().shape({
